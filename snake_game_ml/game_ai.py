@@ -19,7 +19,7 @@ BLACK = (0, 0, 0)
 
 # Constants
 BLOCK_SIZE = 20
-SPEED = 20
+SPEED = 50
 
 # Define direction enum
 class Direction(Enum):
