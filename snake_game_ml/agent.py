@@ -131,7 +131,7 @@ def train():
 
             if score > record:
                 record = score
-                agent.modul.save()
+                agent.model.save()
 
             print('Game', agent.n_games, 'Score', score, 'Record', record)
 
@@ -142,5 +142,5 @@ def train():
             plot(plot_scores, plot_mean_scores)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     train()
