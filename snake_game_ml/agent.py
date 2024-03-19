@@ -87,16 +87,16 @@ class Agent:
     def get_action(self, state):
         # random moves: tradeoff exploration / exploitation
         self.epsilon = 80 - self.n_games
-        final_move = [0,0,0]
+        final_move = [0, 0, 0]
         if random.randint(0, 200) < self.epsilon:
             move = random.randint(0, 2)
-            final_move[move] = 1
         else:
             # predict move
             state0 = torch.tensor(state, dtype=torch.float)
             prediction = self.model(state0)
             move = torch.argmax(prediction).item()
-            final_move[move] = 1
+        move %= len(final_move)
+        final_move[move] = 1
         return final_move
 
 def train():
@@ -111,17 +111,17 @@ def train():
         state_old = agent.get_state(game)
 
         # get action
-        filnal_move = agent.get_action(state_old)
+        final_move = agent.get_action(state_old)
 
         # perform move and get new state
-        reward, done, score = game.play_step(filnal_move)
+        reward, done, score = game.play_step(final_move)
         state_new = agent.get_state(game)
 
         #train short memory
-        agent.train_short_memory(state_old, filnal_move, reward, state_new, done)
+        agent.train_short_memory(state_old, final_move, reward, state_new, done)
 
         # remember
-        agent.remember(state_old, filnal_move, reward, state_new, done)
+        agent.remember(state_old, final_move, reward, state_new, done)
 
         if done:
             # train long memory, plot result
