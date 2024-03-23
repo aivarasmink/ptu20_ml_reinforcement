@@ -1,86 +1,81 @@
 import gym
+from gym import spaces
 import numpy as np
-import random
-import tensorflow as tf
-from tensorflow import keras
 import cv2
 
-# Set random seed for reproducibility
-random.seed(0)
+class SpaceInvadersEnv(gym.Env):
+    def __init__(self):
+        super(SpaceInvadersEnv, self).__init__()
 
-def main():
-    # Create the SpaceInvaders environment
-    env = gym.make('SpaceInvaders-v0')
-    env.seed(0)
-    
-    # Set hyperparameters
-    epsilon = 0.1  # Exploration rate
-    gamma = 0.99   # Discount factor
+        # Define action and observation space
+        self.action_space = spaces.Discrete(6)  # Example discrete action space with 6 actions
+        self.observation_space = spaces.Box(low=0, high=255, shape=(84, 84, 1), dtype=np.uint8)  # Example observation space (image)
 
-    # Define the neural network model
-    model = keras.Sequential([
-        keras.layers.Conv2D(32, (8, 8), strides=(4, 4), activation='relu', input_shape=(84, 84, 4)),
-        keras.layers.Conv2D(64, (4, 4), strides=(2, 2), activation='relu'),
-        keras.layers.Conv2D(64, (2, 2), activation='relu'),
-        keras.layers.Flatten(),
-        keras.layers.Dense(512, activation='relu'),
-        keras.layers.Dense(6, activation='linear'),  # 6 actions in SpaceInvaders
-    ])
+        # Initialize the game environment and other variables
+        self.game = initialize_game()
+        self.current_step = 0
 
-    # Compile the model
-    optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
-    model.compile(optimizer=optimizer, loss='mean_squared_error')
+    def reset(self):
+        # Reset environment to initial state
+        self.game.reset()
+        self.current_step = 0
+        return self._get_observation()
 
-    num_episodes = 100
-    for i in range(num_episodes):
-        episode_reward = 0
-        state = preprocess_observation(env.reset())  # Preprocess the initial observation
-        while True:
-            # Epsilon-greedy policy for action selection
-            if np.random.rand() < epsilon:
-                action = env.action_space.sample()  # Random action with epsilon probability
-            else:
-                action = np.argmax(model.predict(np.expand_dims(state, axis=0)))  # Choose action with highest Q-value
+    def step(self, action):
+        # Take a step in the environment based on the given action
+        self.game.apply_action(action)
+        observation = self._get_observation()
+        reward = self.game.get_reward()
+        done = self.game.is_episode_done()
+        info = {}  # Additional information (optional)
+        self.current_step += 1
+        return observation, reward, done, info
 
-            # Take a step in the environment
-            next_state, reward, done, _ = env.step(action)
-            next_state = preprocess_observation(next_state)  # Preprocess the next observation
+    def _get_observation(self):
+        # Preprocess and return the current observation
+        observation = self.game.get_observation()
+        observation = preprocess_observation(observation)
+        return observation
 
-            # Update experience buffer
-            episode_reward += reward
-            experience_buffer.append((state, action, reward, next_state, done))
-
-            state = next_state
-
-            if done:
-                print("Reward of episode {}: {}".format(i + 1, episode_reward))
-                break
-
-    # Train the model using experience replay
-    minibatch = random.sample(experience_buffer, batch_size)
-    update_dqn(model, minibatch, gamma)
+# Helper functions for game initialization, preprocessing, etc.
+def initialize_game():
+    # Placeholder code to initialize the game environment
+    print("Initializing game environment...")
+    return None
 
 def preprocess_observation(observation):
-    # Preprocess the observation by converting to grayscale and resizing
-    return cv2.resize(cv2.cvtColor(observation, cv2.COLOR_RGB2GRAY), (84, 84))
+    if observation is None:
+        print("Observation is None!")
+        return None
+    
+    if observation.size == 0:
+        print("Observation is empty!")
+        return None
+    
+    observation = cv2.cvtColor(observation, cv2.COLOR_RGB2GRAY)
+    observation = cv2.resize(observation, (84, 84))
+    observation = np.expand_dims(observation, axis=-1)
+    return observation
 
-def update_dqn(model, minibatch, gamma):
-    states, targets = [], []
-    for state, action, reward, next_state, done in minibatch:
-        # Predict Q-values for the current state
-        q_values = model.predict(state[np.newaxis])
-        # Predict Q-values for the next state
-        next_q_values = model.predict(next_state[np.newaxis])
-        # Update Q-value for the chosen action based on Bellman equation
-        q_values[0][action] = reward if done else reward + gamma * np.max(next_q_values)
+# Register the environment with Gym
+gym.register(
+    id='SpaceInvaders-v0',
+    entry_point=SpaceInvadersEnv
+)
 
-        states.append(state)
-        targets.append(q_values)
+# Create an instance of the environment
+env = gym.make('SpaceInvaders-v0')
 
-    # Convert lists to numpy arrays
-    states, targets = np.vstack(states), np.vstack(targets)
-    # Update the model weights using the states and target Q-values
-    model.fit(states, targets, epochs=1, verbose=0)
 
-if __name__ == "__main__":
-    main()
+# Main loop
+observation = env.reset()
+while True:
+    env.render()  # Render the environment (optional)
+    action = env.action_space.sample()  # Choose a random action
+    observation, reward, done, info = env.step(action)  # Take a step in the environment
+    if done:
+        print("Episode finished!")
+        break
+
+# Close the environment
+env.close()
