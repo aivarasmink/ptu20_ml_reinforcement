@@ -71,3 +71,41 @@ st.subheader("Original close price vs Predicted close price")
 fig = plt.figure(figsize=(15, 6))
 plt.plot()
 
+plt.plot(pd.concat([xrp_data.close[:splitting_len+100], ploting_data], axis=0))
+plt.legend(["Data- not used", "Original test data", "Predicted test data"])
+st.pyplot(fig)
+
+st.subheader("Future price value")
+# st.write(ploting_data)
+
+last_100 = xrp_data[['Close']].tail(100)
+last_100 = scaler.fit_transform(last_100['close'].values.reshape(-1, 1)).reshape(1, -1, 1)
+previuous_100 = np.copy(last_100).tolist()  
+
+def predict_future(no_of_days, previous_100, model, scaler):
+    future_predictions = []
+    for i in range(no_of_days):
+        next_day = model.predict(previous_100).tolist()
+        
+        # Update previous_100 for the next prediction
+        previous_100 = np.append(previous_100, [[next_day[0]]], axis=1)
+        previous_100 = previous_100[:, 1:]  # Drop the first column
+
+        # Inverse transform the predicted value and append to future_predictions
+        future_predictions.append(scaler.inverse_transform(np.array([next_day]).reshape(-1, 1)))  # Convert next_day to a 2D array
+    return future_predictions
+
+no_of_days = int(st.text_input("Enter the number of days you want to predict: ", 10))
+future_results = predict_future(no_of_days, previuous_100)
+future_results = np.array(future_results).reshape(-1, 1)
+print(future_results)
+fig = plt.figure(figsize=(15, 6))
+plt.plot(pd.DataFrame(future_results), marker='o', color='red')
+for i in range(len(future_results)):
+    plt.text(i, future_results[i], int(future_results[i][0]))
+plt.xlabel("Days")
+plt.ylabel("Close Price")
+plt.xticks(range(no_of_days))
+plt.yticks(range(min(list(map(int, future_results))), max(list(map(int, future_results))), 100))
+plt.title('Closing pricr of xrp')
+st.pyplot(fig)
