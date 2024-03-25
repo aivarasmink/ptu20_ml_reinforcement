@@ -98,7 +98,7 @@ def predict_future(no_of_days, previous_100, model, scaler):
 no_of_days = int(st.text_input("Enter the number of days you want to predict: ", 10))
 future_results = predict_future(no_of_days, previuous_100)
 future_results = np.array(future_results).reshape(-1, 1)
-print(future_results)
+st.write(future_results)
 fig = plt.figure(figsize=(15, 6))
 plt.plot(pd.DataFrame(future_results), marker='o', color='red')
 for i in range(len(future_results)):
