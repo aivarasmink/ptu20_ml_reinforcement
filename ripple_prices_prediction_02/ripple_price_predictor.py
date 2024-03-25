@@ -18,7 +18,7 @@ stock = st.text_input("Enter the Stock here: ", stock)
 
 xrp_data = yf.download(stock, start, end)
 
-model = load_model("xrp_price_predictor.keras")
+model = load_model("C:/Users/aivi1/ptu20_ml_reinforcement/ripple_prices_prediction_02/xrp_price_predictor.keras")
 st.subheader("XRP Data")
 st.write(xrp_data)
 
