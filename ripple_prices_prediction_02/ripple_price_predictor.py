@@ -58,3 +58,16 @@ inverted_predictions = scaler.inverse_transform(predictions)
 inverted_y_test = scaler.inverse_transform(y_data)
 
 
+ploting_data = pd.DataFrame({
+    'original_test_data': inverted_y_test.reshape(-1),
+    'predictions': inverted_predictions.reshape(-1)
+}, 
+    index = xrp_data.index[splitting_len + 100:]
+)
+st.subheader("Original vs Predicted value")
+st.write(ploting_data)
+
+st.subheader("Original close price vs Predicted close price")
+fig = plt.figure(figsize=(15, 6))
+plt.plot()
+
