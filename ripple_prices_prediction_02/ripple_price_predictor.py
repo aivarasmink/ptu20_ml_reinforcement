@@ -75,24 +75,31 @@ plt.legend(["Data- not used", "Original test data", "Predicted test data"])
 st.pyplot(fig)
 
 st.subheader("Future price value")
-# st.write(ploting_data)
 
+# Correct the shape of last_100
 last_100 = xrp_data[['Close']].tail(100)
-last_100 = scaler.fit_transform(last_100['Close'].values.reshape(-1, 1)).reshape(1, -1, 1)
-previous_100 = np.copy(last_100).tolist()  
+last_100 = scaler.fit_transform(last_100['Close'].values.reshape(-1, 1))
+previous_100 = np.copy(last_100)  # Remove the extra list here
 
 def predict_future(no_of_days, previous_100, model, scaler):
     future_predictions = []
     for i in range(no_of_days):
-        next_day = model.predict(previous_100).tolist()
+        print("Previous 100 shape:", previous_100.shape)  # Debug statement
+        # Reshape previous_100 to match the expected input shape of the model
+        previous_100_reshaped = np.reshape(previous_100, (1, 100, 1))
+        
+        # Predict the next day's value
+        next_day = model.predict(previous_100_reshaped).flatten()[0]
+        print("Next day:", next_day)  # Debug statement
         
         # Update previous_100 for the next prediction
-        previous_100 = np.append(previous_100, [[next_day[0]]], axis=1)
-        previous_100 = previous_100[:, 1:]  # Drop the first column
+        previous_100 = np.append(previous_100[0][1:], [[next_day]], axis=0)
+        print("Updated previous 100 shape:", previous_100.shape)  # Debug statement
 
         # Inverse transform the predicted value and append to future_predictions
-        future_predictions.append(scaler.inverse_transform(np.array([next_day]).reshape(-1, 1)))  # Convert next_day to a 2D array
+        future_predictions.append(scaler.inverse_transform([[next_day]])[0][0])
     return future_predictions
+
 
 no_of_days = int(st.text_input("Enter the number of days you want to predict: ", 10))
 future_results = predict_future(no_of_days, previous_100, model, scaler)
@@ -106,5 +113,5 @@ plt.xlabel("Days")
 plt.ylabel("Close Price")
 plt.xticks(range(no_of_days))
 plt.yticks(range(int(min(future_results)), int(max(future_results)), 100))
-plt.title('Closing price of XRP')  
+plt.title('Closing price of XRP')
 st.pyplot(fig)
