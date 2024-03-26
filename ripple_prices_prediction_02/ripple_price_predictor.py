@@ -10,15 +10,32 @@ from datetime import datetime
 # Set title for the Streamlit app
 st.title("Ripple Price Predictor")
 
-# Define the stock symbol and fetch historical data
+# Define the function to predict future closing prices
+def predict_future(no_of_days, previous_100, model, scaler):
+    future_predictions = []
+    for i in range(no_of_days):
+        # Reshape previous_100 to match the expected input shape of the model
+        previous_100_reshaped = np.reshape(previous_100, (1, 100, 1))
+        
+        # Predict the next day's value
+        next_day = model.predict(previous_100_reshaped).flatten()[0]
+        
+        # Update previous_100 for the next prediction
+        previous_100 = np.append(previous_100[1:], [[next_day]], axis=0)
+
+        # Inverse transform the predicted value and append to future_predictions
+        future_predictions.append(scaler.inverse_transform([[next_day]])[0][0])
+    return future_predictions
+
+# Load the pre-trained LSTM model
+model = load_model("xrp_price_model.keras")
+
+# Fetch historical data for XRP
 stock = "XRP-USD"
 end = datetime.now()
 start = datetime(end.year - 10, end.month, end.day)
 stock = st.text_input("Enter the Stock here: ", stock)
 xrp_data = yf.download(stock, start, end)
-
-# Load the pre-trained LSTM model
-model = load_model("xrp_price_model.keras")
 
 # Display XRP data and plot the original closing prices
 st.subheader("XRP Data")
@@ -69,48 +86,33 @@ plt.plot(pd.concat([xrp_data["Close"][:splitting_len+100], plotting_data], axis=
 plt.legend(["Data- not used", "Original test data", "Predicted test data"])
 st.pyplot(fig)
 
-# Function to predict future prices
-def predict_future(no_of_days, previous_100, model, scaler):
-    future_predictions = []
-    for i in range(no_of_days):
-        # Reshape previous_100 to match the expected input shape of the model
-        previous_100_reshaped = np.reshape(previous_100, (1, 100, 1))
-        
-        # Predict the next day's value
-        next_day = model.predict(previous_100_reshaped).flatten()[0]
-        
-        # Update previous_100 for the next prediction
-        previous_100 = np.append(previous_100[1:], [[next_day]], axis=0)
-
-        # Inverse transform the predicted value and append to future_predictions
-        future_predictions.append(scaler.inverse_transform([[next_day]])[0][0])
-    return future_predictions
-
-# Input for number of days to predict
-no_of_days = int(st.text_input("Enter the number of days you want to predict: ", 10))
+# Predict for tomorrow (next day) only
+no_of_days = 3
 
 # Predict future prices
 last_100 = xrp_data['Close'].tail(100).values.reshape(-1, 1)
 last_100 = scaler.fit_transform(last_100)
 previous_100 = np.copy(last_100)
 future_results = predict_future(no_of_days, previous_100, model, scaler)
+future_results = np.array(future_results).reshape(-1, 1)
 
-# Prepare future dates for plotting
-future_dates = pd.date_range(start=xrp_data.index[-1], periods=no_of_days+1, closed='right')[1:]
+# Prepare future date for plotting
+future_date = pd.date_range(start=xrp_data.index[-1], periods=no_of_days+1, closed='right')[1]
 
-# Display predicted future prices
+# Display predicted future price for tomorrow
 future_data = pd.DataFrame({
-    'Date': future_dates,
-    'Predicted Close Price': future_results
+    'Date': [future_date],
+    'Predicted Close Price': future_results.reshape(-1)
 })
 
+st.subheader("Predicted Closing Price for Tomorrow")
 st.write(future_data)
 
-# Plot future predicted prices
-fig = plt.figure(figsize=(15, 6))
-plt.plot(future_dates, future_results, marker='o', color='red')
+# Plot future predicted price for tomorrow
+fig = plt.figure(figsize=(10, 6))
+plt.plot([future_date], future_results, marker='o', color='red')
 plt.xlabel("Date")
 plt.ylabel("Close Price")
-plt.title('Predicted Closing price of XRP')
+plt.title('Predicted Closing price of XRP for Tomorrow')
 plt.grid(True)
 st.pyplot(fig)
