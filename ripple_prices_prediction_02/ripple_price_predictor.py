@@ -54,7 +54,7 @@ inverted_predictions = scaler.inverse_transform(predictions)
 inverted_y_test = scaler.inverse_transform(y_data.reshape(-1, 1))
 
 # Prepare data for plotting
-ploting_data = pd.DataFrame({
+plotting_data = pd.DataFrame({
     'original_test_data': inverted_y_test.reshape(-1),
     'predictions': inverted_predictions.reshape(-1)
 }, 
@@ -63,9 +63,9 @@ ploting_data = pd.DataFrame({
 
 # Plot original vs predicted values
 st.subheader("Original vs Predicted value")
-st.write(ploting_data)
+st.write(plotting_data)
 fig = plt.figure(figsize=(15, 6))
-plt.plot(pd.concat([xrp_data["Close"][:splitting_len+100], ploting_data], axis=0))
+plt.plot(pd.concat([xrp_data["Close"][:splitting_len+100], plotting_data], axis=0))
 plt.legend(["Data- not used", "Original test data", "Predicted test data"])
 st.pyplot(fig)
 
@@ -80,7 +80,7 @@ def predict_future(no_of_days, previous_100, model, scaler):
         next_day = model.predict(previous_100_reshaped).flatten()[0]
         
         # Update previous_100 for the next prediction
-        previous_100 = np.append(previous_100[0][1:], [[next_day]], axis=0)
+        previous_100 = np.append(previous_100[1:], [[next_day]], axis=0)
 
         # Inverse transform the predicted value and append to future_predictions
         future_predictions.append(scaler.inverse_transform([[next_day]])[0][0])
@@ -90,23 +90,27 @@ def predict_future(no_of_days, previous_100, model, scaler):
 no_of_days = int(st.text_input("Enter the number of days you want to predict: ", 10))
 
 # Predict future prices
-last_100 = xrp_data[['Close']].tail(100)
-last_100 = scaler.fit_transform(last_100['Close'].values.reshape(-1, 1))
+last_100 = xrp_data['Close'].tail(100).values.reshape(-1, 1)
+last_100 = scaler.fit_transform(last_100)
 previous_100 = np.copy(last_100)
 future_results = predict_future(no_of_days, previous_100, model, scaler)
-future_results = np.array(future_results).reshape(-1, 1)
+
+# Prepare future dates for plotting
+future_dates = pd.date_range(start=xrp_data.index[-1], periods=no_of_days+1, closed='right')[1:]
 
 # Display predicted future prices
-st.write(future_results)
+future_data = pd.DataFrame({
+    'Date': future_dates,
+    'Predicted Close Price': future_results
+})
+
+st.write(future_data)
 
 # Plot future predicted prices
 fig = plt.figure(figsize=(15, 6))
-plt.plot(pd.DataFrame(future_results), marker='o', color='red')
-for i in range(len(future_results)):
-    plt.text(i, future_results[i], int(future_results[i][0]))
-plt.xlabel("Days")
+plt.plot(future_dates, future_results, marker='o', color='red')
+plt.xlabel("Date")
 plt.ylabel("Close Price")
-plt.xticks(range(no_of_days))
-plt.yticks(range(int(min(future_results)), int(max(future_results)), 100))
-plt.title('Closing price of XRP')
+plt.title('Predicted Closing price of XRP')
+plt.grid(True)
 st.pyplot(fig)
