@@ -55,8 +55,7 @@ x_data, y_data = np.array(x_data), np.array(y_data)
 
 predictions = model.predict(x_data)
 inverted_predictions = scaler.inverse_transform(predictions)
-inverted_y_test = scaler.inverse_transform(y_data)
-
+inverted_y_test = scaler.inverse_transform(y_data.reshape(-1, 1))
 
 ploting_data = pd.DataFrame({
     'original_test_data': inverted_y_test.reshape(-1),
@@ -79,8 +78,8 @@ st.subheader("Future price value")
 # st.write(ploting_data)
 
 last_100 = xrp_data[['Close']].tail(100)
-last_100 = scaler.fit_transform(last_100['close'].values.reshape(-1, 1)).reshape(1, -1, 1)
-previuous_100 = np.copy(last_100).tolist()  
+last_100 = scaler.fit_transform(last_100['Close'].values.reshape(-1, 1)).reshape(1, -1, 1)
+previous_100 = np.copy(last_100).tolist()  
 
 def predict_future(no_of_days, previous_100, model, scaler):
     future_predictions = []
@@ -96,7 +95,7 @@ def predict_future(no_of_days, previous_100, model, scaler):
     return future_predictions
 
 no_of_days = int(st.text_input("Enter the number of days you want to predict: ", 10))
-future_results = predict_future(no_of_days, previuous_100)
+future_results = predict_future(no_of_days, previous_100, model, scaler)
 future_results = np.array(future_results).reshape(-1, 1)
 st.write(future_results)
 fig = plt.figure(figsize=(15, 6))
@@ -106,6 +105,6 @@ for i in range(len(future_results)):
 plt.xlabel("Days")
 plt.ylabel("Close Price")
 plt.xticks(range(no_of_days))
-plt.yticks(range(min(list(map(int, future_results))), max(list(map(int, future_results))), 100))
+plt.yticks(range(int(min(future_results)), int(max(future_results)), 100))
 plt.title('Closing pricr of xrp')
 st.pyplot(fig)
