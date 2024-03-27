@@ -39,7 +39,7 @@ xrp_data = yf.download(stock, start, end)
 
 # Display XRP data and plot the original closing prices
 st.subheader("XRP Data")
-st.write(xrp_data)
+st.write(xrp_data, format='text')
 figsize = (15, 6)
 fig = plt.figure(figsize=figsize)
 plt.plot(xrp_data["Close"], 'b')
@@ -80,7 +80,7 @@ plotting_data = pd.DataFrame({
 
 # Plot original vs predicted values
 st.subheader("Original vs Predicted value")
-st.write(plotting_data)
+st.write(plotting_data, format='text')
 fig = plt.figure(figsize=(15, 6))
 plt.plot(pd.concat([xrp_data["Close"][:splitting_len+100], plotting_data], axis=0))
 plt.legend(["Data- not used", "Original test data", "Predicted test data"])
