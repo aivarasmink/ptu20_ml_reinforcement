@@ -19,7 +19,7 @@ The Snake Game with Machine Learning project is a Python implementation of the c
 - Neural network predicts the next move based on the current game state
 - Performance metrics and visualization of the training process
 
-![Screenshot 2024-03-27 140225.png](media/Screenshot 2024-03-27 140225.png)
+![Screenshot.png](media/Screenshot.png)
 
 ## Ripple Price Predictor from Yahoo Finance and Wikipedia
 
