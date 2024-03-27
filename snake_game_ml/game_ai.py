@@ -33,6 +33,13 @@ Point = namedtuple('Point', 'x, y')
 
 class SnakeGameAI:
     def __init__(self, width=640, height=480):
+        """
+        Initialize the SnakeGameAI class.
+
+        Parameters:
+        - width: Width of the game window.
+        - height: Height of the game window.
+        """
         self.width = width
         self.height = height
 
@@ -54,6 +61,9 @@ class SnakeGameAI:
         self._place_food()
 
     def reset(self):
+        """
+        Reset the game state.
+        """
         self.direction = Direction.RIGHT
         self.head = Point(self.width / 2, self.height / 2)
         self.snake = [self.head, Point(self.head.x - BLOCK_SIZE, self.head.y),
@@ -64,6 +74,9 @@ class SnakeGameAI:
         self.frame_iteration = 0
 
     def _place_food(self):
+        """
+        Place food randomly on the game window.
+        """
         x = random.randint(0, (self.width - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
         y = random.randint(0, (self.height - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
         self.food = Point(x, y)
@@ -71,6 +84,17 @@ class SnakeGameAI:
             self._place_food()
 
     def play_step(self, action):
+        """
+        Execute a step in the game.
+
+        Parameters:
+        - action: Action to be taken by the agent.
+
+        Returns:
+        - reward: Reward obtained from the action.
+        - game_over: Boolean indicating if the game is over.
+        - score: Current score.
+        """
         self.frame_iteration += 1
         # Collect user input
         for event in pygame.event.get():
@@ -106,6 +130,15 @@ class SnakeGameAI:
         return reward, game_over, self.score
 
     def is_collision(self, pt=None):
+        """
+        Check for collision with boundaries or self.
+
+        Parameters:
+        - pt: Point to check for collision (default is head).
+
+        Returns:
+        - True if collision occurs, False otherwise.
+        """
         if pt is None:
             pt = self.head
         # Check boundary collision
@@ -118,6 +151,9 @@ class SnakeGameAI:
         return False
 
     def _update_ui(self):
+        """
+        Update the game's user interface.
+        """
         self.display.fill(BLACK)
 
         # Draw snake
@@ -134,6 +170,12 @@ class SnakeGameAI:
         pygame.display.flip()
 
     def _move(self, action):
+        """
+        Move the snake based on the given action.
+
+        Parameters:
+        - action: Action to be taken by the snake.
+        """
         #[straight, left, up, down]      
         clock_wise = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
         idx = clock_wise.index(self.direction)
